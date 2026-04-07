@@ -19,12 +19,14 @@ function LoginPageContent() {
   useEffect(() => {
     const forcedMode = searchParams.get('mode');
     const callbackError = searchParams.get('error');
+
     if (forcedMode === 'register' || forcedMode === 'reset' || forcedMode === 'update') {
       setMode(forcedMode);
     }
+
     if (callbackError) setError(callbackError);
 
-    const unsub = supabase.auth.onAuthStateChange((event) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setMode('update');
         setMessage('Link verificato. Ora imposta una nuova password.');
@@ -33,15 +35,17 @@ function LoginPageContent() {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return;
+
       if (forcedMode === 'update') {
         setMode('update');
         return;
       }
+
       router.replace('/dashboard');
     });
 
     return () => {
-      unsub.data.subscription.unsubscribe();
+      listener.subscription.unsubscribe();
     };
   }, [router, searchParams]);
 
@@ -61,6 +65,7 @@ function LoginPageContent() {
     try {
       if (mode === 'login') {
         const { data, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+
         if (loginError) {
           setError('Email o password errata');
           return;
@@ -68,9 +73,10 @@ function LoginPageContent() {
 
         const user = data.user;
         const confirmed = !!user?.email_confirmed_at;
+
         if (!confirmed) {
           await supabase.auth.signOut();
-          setMessage('Conferma prima la tua email. Ti abbiamo inviato il link di verifica.');
+          setMessage('Conferma prima la tua email. Controlla la tua inbox.');
           return;
         }
 
@@ -79,7 +85,8 @@ function LoginPageContent() {
       }
 
       if (mode === 'register') {
-        const redirectBase = typeof window !== 'undefined' ? window.location.origin : '';
+        const redirectBase = window.location.origin;
+
         const { error: registerError } = await supabase.auth.signUp({
           email,
           password,
@@ -87,36 +94,42 @@ function LoginPageContent() {
             emailRedirectTo: `${redirectBase}/auth/callback?next=/dashboard`,
           },
         });
+
         if (registerError) {
           setError(registerError.message);
           return;
         }
 
-        setMessage('Registrazione inviata. Conferma la mail e verrai reindirizzato nella SaaS.');
+        setMessage('Registrazione completata. Controlla la mail per confermare.');
         return;
       }
 
       if (mode === 'reset') {
-        const redirectBase = typeof window !== 'undefined' ? window.location.origin : '';
+        const redirectBase = window.location.origin;
+
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${redirectBase}/login?mode=update`,
         });
+
         if (resetError) {
           setError(resetError.message);
           return;
         }
 
-        setMessage('Email per reset password inviata.');
+        setMessage('Email di reset inviata.');
         return;
       }
 
-      const { error: updateError } = await supabase.auth.updatePassword(password);
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+      });
+
       if (updateError) {
         setError(updateError.message);
         return;
       }
 
-      setMessage('Password aggiornata con successo. Ora puoi accedere.');
+      setMessage('Password aggiornata con successo.');
       setMode('login');
       setPassword('');
     } finally {
@@ -125,26 +138,75 @@ function LoginPageContent() {
   };
 
   return (
-    <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
-      <section style={{ width: '100%', maxWidth: 460 }}>
-        <h1>{title}</h1>
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        background: 'radial-gradient(circle at top,#152753,#090e1d 45%)',
+        padding: 16,
+      }}
+    >
+      <section
+        style={{
+          width: '100%',
+          maxWidth: 460,
+          borderRadius: 18,
+          background: '#101936',
+          border: '1px solid #2a3b73',
+          boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
+          padding: 24,
+          color: '#fff',
+        }}
+      >
+        <h1 style={{ marginTop: 0, fontSize: 28 }}>{title}</h1>
 
-        <form onSubmit={submit}>
+        <p style={{ opacity: 0.78, marginBottom: 18 }}>
+          Login completo con Supabase
+        </p>
+
+        <form onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
           {(mode === 'login' || mode === 'register' || mode === 'reset') && (
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label style={{ display: 'grid', gap: 5 }}>
+              <span>Email</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{ padding: 10 }}
+              />
+            </label>
           )}
 
           {mode !== 'reset' && (
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <label style={{ display: 'grid', gap: 5 }}>
+              <span>{mode === 'update' ? 'Nuova password' : 'Password'}</span>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ padding: 10 }}
+              />
+            </label>
           )}
 
-          <button disabled={loading} type="submit">
-            {loading ? '...' : 'Submit'}
+          <button type="submit" disabled={loading}>
+            {loading ? 'Attendere...' : 'Invia'}
           </button>
         </form>
 
-        {error && <p>{error}</p>}
-        {message && <p>{message}</p>}
+        {error && <p style={{ color: '#ff8e8e' }}>{error}</p>}
+        {message && <p style={{ color: '#9ee6b1' }}>{message}</p>}
+
+        {mode !== 'update' && (
+          <div style={{ marginTop: 16 }}>
+            <button onClick={() => setMode('login')}>Login</button>
+            <button onClick={() => setMode('register')}>Registrazione</button>
+            <button onClick={() => setMode('reset')}>Reset password</button>
+          </div>
+        )}
       </section>
     </main>
   );
