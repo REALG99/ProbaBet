@@ -149,23 +149,96 @@ export default function LoginPage() {
         }}
       >
         <h1 style={{ marginTop: 0, fontSize: 28 }}>{title}</h1>
+        <p style={{ opacity: 0.78, marginBottom: 18 }}>
+          Login completo con Supabase: accesso, registrazione, conferma email e recupero password.
+        </p>
 
         <form onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
           {(mode === 'login' || mode === 'register' || mode === 'reset') && (
-            <input value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label style={{ display: 'grid', gap: 5 }}>
+              <span style={{ fontSize: 14, opacity: 0.86 }}>Email</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nome@email.com"
+                style={{ borderRadius: 10, border: '1px solid #3a4f8e', padding: '10px 12px', background: '#0b1230', color: '#fff' }}
+              />
+            </label>
           )}
 
           {mode !== 'reset' && (
-            <input value={password} onChange={(e) => setPassword(e.target.value)} />
+            <label style={{ display: 'grid', gap: 5 }}>
+              <span style={{ fontSize: 14, opacity: 0.86 }}>{mode === 'update' ? 'Nuova password' : 'Password'}</span>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="******"
+                style={{ borderRadius: 10, border: '1px solid #3a4f8e', padding: '10px 12px', background: '#0b1230', color: '#fff' }}
+              />
+            </label>
           )}
 
-          <button disabled={loading} type="submit">
-            {loading ? '...' : 'Submit'}
+          <button
+            disabled={loading}
+            type="submit"
+            style={{
+              marginTop: 6,
+              border: 'none',
+              borderRadius: 12,
+              padding: '11px 13px',
+              background: '#3556ff',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {loading
+              ? 'Attendere...'
+              : mode === 'login'
+                ? 'Accedi'
+                : mode === 'register'
+                  ? 'Registrati'
+                  : mode === 'reset'
+                    ? 'Invia reset'
+                    : 'Aggiorna password'}
           </button>
         </form>
 
-        {error && <p>{error}</p>}
-        {message && <p>{message}</p>}
+        {error && (
+          <p style={{ marginTop: 12, color: '#ff8e8e', background: '#3a1414', padding: 10, borderRadius: 10 }}>{error}</p>
+        )}
+
+        {message && (
+          <p style={{ marginTop: 12, color: '#9ee6b1', background: '#143022', padding: 10, borderRadius: 10 }}>{message}</p>
+        )}
+
+        {mode !== 'update' && (
+          <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setMode('login')}
+              style={{ border: '1px solid #31447d', background: mode === 'login' ? '#263b80' : 'transparent', color: '#fff', borderRadius: 20, padding: '7px 11px' }}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setMode('register')}
+              style={{ border: '1px solid #31447d', background: mode === 'register' ? '#263b80' : 'transparent', color: '#fff', borderRadius: 20, padding: '7px 11px' }}
+            >
+              Registrazione
+            </button>
+            <button
+              onClick={() => setMode('reset')}
+              style={{ border: '1px solid #31447d', background: mode === 'reset' ? '#263b80' : 'transparent', color: '#fff', borderRadius: 20, padding: '7px 11px' }}
+            >
+              Password dimenticata
+            </button>
+          </div>
+        )}
       </section>
     </main>
   );
