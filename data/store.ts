@@ -113,6 +113,7 @@ const defaults: Record<string, TeamStats> = {
   'Atletico Madrid': team('Atletico Madrid', 1.53, 1.47, 6.5, 3.93, 63, 61, '—'),
   'Atlético Madrid': team('Atlético Madrid', 1.53, 1.47, 6.5, 3.93, 63, 61, '—'),
   Barcelona: team('Barcelona', 2.63, 2.43, 7.27, 4.2, 97, 45, 'W W W W W'),
+  Barcellona: team('Barcellona', 2.63, 2.43, 7.27, 4.2, 97, 45, 'W W W W W'),
   Espanyol: team('Espanyol', 1.17, 1.07, 4.67, 4.47, 47, 67, 'L L D L D'),
   Valencia: team('Valencia', 1.13, 0.97, 5.2, 4.47, 56, 58, 'L W L L W'),
   Sevilla: team('Sevilla', 1.17, 1.03, 4.93, 4.57, 53, 85, '—'),
@@ -141,6 +142,7 @@ const defaults: Record<string, TeamStats> = {
   'Brighton & Hove Albion': team('Brighton & Hove Albion', 1.29, 1.19, 4.74, 4.84, 77, 79, 'D L D D D'),
   Brighton: team('Brighton', 1.29, 1.19, 4.74, 4.84, 77, 79, 'D L D D D'),
   Liverpool: team('Liverpool', 1.55, 1.52, 5.97, 4.45, 74, 49, '—'),
+  'Aston Villa': team('Aston Villa', 1.58, 1.41, 5.2, 4.55, 72, 60, 'W D W L W'),
   Fulham: team('Fulham', 1.26, 1.13, 4.71, 5.68, 71, 65, '—'),
   'Crystal Palace': team('Crystal Palace', 1.07, 0.87, 4.27, 4.83, 60, 64, '—'),
   Newcastle: team('Newcastle', 1.42, 1.23, 6.58, 5.03, 71, 54, '—'),
@@ -178,11 +180,33 @@ const defaults: Record<string, TeamStats> = {
   Sassuolo: team('Sassuolo', 1.19, 1.13, 3.9, 4.74, 39, 67, 'L W W L D'),
   Pisa: team('Pisa', 0.71, 0.52, 3.68, 4.87, 39, 61, '—'),
   Cremonese: team('Cremonese', 0.84, 0.74, 3.23, 6.45, 32, 64, 'L L L L W'),
+
+  // Primeira Liga + alias aggiuntivi per CSV
+  Sporting: team('Sporting', 2.02, 1.79, 5.64, 3.84, 88, 52, 'W W D W W'),
+  Braga: team('Braga', 1.66, 1.46, 5.09, 4.36, 73, 58, 'W L W D W'),
+  Porto: team('Porto', 1.91, 1.71, 5.58, 3.91, 85, 54, 'W W L W D'),
+  Friburgo: team('Friburgo', 1.39, 1.21, 4.46, 4.14, 68, 44, 'D L L L W'),
 };
 
 export function getTeamStatsMap(): Record<string, TeamStats> {
   return defaults;
 }
+
+function normalizeTeamKey(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+const normalizedDefaults: Record<string, TeamStats> = Object.entries(defaults).reduce(
+  (acc, [name, stats]) => {
+    acc[normalizeTeamKey(name)] = stats;
+    return acc;
+  },
+  {} as Record<string, TeamStats>,
+);
 
 export function saveTeamStats(_teamStats: TeamStats): void {
   if (typeof window !== 'undefined') {
@@ -192,7 +216,8 @@ export function saveTeamStats(_teamStats: TeamStats): void {
 
 export function getTeamStats(name: string): TeamStats | null {
   const all = getTeamStatsMap();
-  return all[name] || null;
+  if (all[name]) return all[name];
+  return normalizedDefaults[normalizeTeamKey(name)] || null;
 }
 
 export function listTeams(): string[] {
