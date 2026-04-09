@@ -37,6 +37,9 @@ export default function DashboardClient({ fixtures }: { fixtures: Fixture[] }) {
         router.replace('/login');
         return;
       }
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('betting_saas_has_session', '1');
+      }
       setTeams(Object.values(getTeamStatsMap()).sort((a, b) => a.name.localeCompare(b.name)));
       setLoading(false);
     });
@@ -90,6 +93,10 @@ export default function DashboardClient({ fixtures }: { fixtures: Fixture[] }) {
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
+                if (typeof window !== 'undefined') {
+                  window.localStorage.removeItem('betting_saas_has_session');
+                  document.cookie = 'betting_saas_auth=; path=/; max-age=0; samesite=lax';
+                }
                 router.replace('/login');
               }}
               style={{ background: '#a33544', color: '#fff', padding: '9px 12px', borderRadius: 10, border: 'none' }}
