@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { calculateMatchProbabilities } from '../../../lib/calculations';
 import { getTeamStats, TeamStats } from '../../../data/store';
+import { supabase } from '../../../lib/supabase';
 
 function StatRow({ label, home, away }: { label: string; home: string | number; away: string | number }) {
   return (
@@ -34,6 +36,7 @@ function hasRequiredStats(stats: TeamStats | null): stats is TeamStats {
 }
 
 export default function MatchAnalysisPage() {
+  const router = useRouter();
   const params = useSearchParams();
   const homeName = params.get('home') || 'Home';
   const awayName = params.get('away') || 'Away';
@@ -43,6 +46,20 @@ export default function MatchAnalysisPage() {
   const homeStats = useMemo(() => getTeamStats(homeName), [homeName]);
   const awayStats = useMemo(() => getTeamStats(awayName), [awayName]);
   const [calculated, setCalculated] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+  const [checkedAuth, setCheckedAuth] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.replace('/login');
+        setCheckedAuth(true);
+        return;
+      }
+      setAuthorized(true);
+      setCheckedAuth(true);
+    });
+  }, [router]);
 
   const canCalculate = hasRequiredStats(homeStats) && hasRequiredStats(awayStats);
   const result = useMemo(() => {
@@ -95,6 +112,9 @@ export default function MatchAnalysisPage() {
       recommendation: pick.value >= 60 ? 'CONSIGLIATA' : pick.value >= 52 ? 'VALUTARE' : 'RISCHIO',
     }));
   }, [result, homeName, awayName]);
+
+  if (!checkedAuth) return <main style={{ minHeight: '100vh', background: '#090f20' }} />;
+  if (!authorized) return null;
 
   return (
     <main style={{ minHeight: '100vh', background: '#090f20', color: '#f6f8ff', padding: 18 }}>
