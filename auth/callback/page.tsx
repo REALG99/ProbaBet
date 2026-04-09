@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -18,6 +18,9 @@ export default function AuthCallbackPage() {
         if (error) {
           router.replace(`/login?error=${encodeURIComponent(error.message)}`);
           return;
+        }
+        if (typeof window !== 'undefined') {
+          document.cookie = 'betting_saas_auth=1; path=/; max-age=2592000; samesite=lax';
         }
       }
 
