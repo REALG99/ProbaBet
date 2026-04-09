@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Script from 'next/script';
 import { matches } from '../data/matches';
 
 function sortTs(match: { date: string; time: string }): number {
@@ -23,6 +24,13 @@ export default function HomePage() {
 
   return (
     <main style={{ minHeight: '100vh', background: '#0b1020', color: '#f6f8ff', padding: '32px 18px' }}>
+      <Script id="home-login-gate" strategy="beforeInteractive">{`
+        try {
+          window.location.replace('/login');
+        } catch (e) {
+          window.location.replace('/login');
+        }
+      `}</Script>
       <div style={{ maxWidth: 1080, margin: '0 auto' }}>
         <header
           style={{
