@@ -28,24 +28,6 @@ export type MatchProbabilities = {
     over105: number;
     under105: number;
   };
-  cards?: {
-    over25: number;
-    under25: number;
-    over35: number;
-    under35: number;
-    over45: number;
-    under45: number;
-  };
-  shots?: {
-    over105: number;
-    under105: number;
-    over125: number;
-    under125: number;
-    over145: number;
-    under145: number;
-    over165: number;
-    under165: number;
-  };
 };
 
 const clamp = (value: number, min = 0, max = 100) => {
@@ -82,8 +64,11 @@ function normalizeThreeWay(homeStrength: number, drawStrength: number, awayStren
 export function calculateMatchProbabilities(home: TeamStats, away: TeamStats): MatchProbabilities {
   const homeForm = formScore(home.form);
   const awayForm = formScore(away.form);
-  const homeExpected = clamp((home.avgGoalsFor + away.avgGoalsAgainst) / 2, 0.05, 4.8);
-  const awayExpected = clamp((away.avgGoalsFor + home.avgGoalsAgainst) / 2, 0.05, 4.8);
+  const baseHomeExpected = (home.avgGoalsFor + away.avgGoalsAgainst) / 2;
+  const baseAwayExpected = (away.avgGoalsFor + home.avgGoalsAgainst) / 2;
+  const shotGap = home.shots - away.shots;
+  const homeExpected = clamp(baseHomeExpected + shotGap * 0.035, 0.05, 4.8);
+  const awayExpected = clamp(baseAwayExpected - shotGap * 0.025, 0.05, 4.8);
   const strengthGap = homeExpected - awayExpected;
   const balancePenalty = Math.abs(strengthGap);
 
@@ -101,13 +86,6 @@ export function calculateMatchProbabilities(home: TeamStats, away: TeamStats): M
 
   const hasCornersData = typeof home.cornersAgainst === 'number' && typeof away.cornersAgainst === 'number';
   const cornersMean = hasCornersData ? (home.corners + away.corners + home.cornersAgainst + away.cornersAgainst) / 2 : null;
-
-  const cardsMean = home.cards + away.cards;
-
-  const baseOver105Home = typeof home.shotsOver105 === 'number' ? home.shotsOver105 : clamp(20 + home.shots * 4.5, 5, 95);
-  const baseOver105Away = typeof away.shotsOver105 === 'number' ? away.shotsOver105 : clamp(20 + away.shots * 4.5, 5, 95);
-  const rhythmBoost = ((homeForm + awayForm) / 2 - 50) * 0.08;
-  const over105Shots = clamp((baseOver105Home + baseOver105Away) / 2 + rhythmBoost, 5, 95);
 
   return {
     oneXTwo: {
@@ -139,24 +117,6 @@ export function calculateMatchProbabilities(home: TeamStats, away: TeamStats): M
           under105: Number((100 - marketOverProbability(cornersMean, 10.5, 14)).toFixed(1)),
         }
       : undefined,
-    cards: {
-      over25: Number(marketOverProbability(cardsMean, 2.5, 19).toFixed(1)),
-      under25: Number((100 - marketOverProbability(cardsMean, 2.5, 19)).toFixed(1)),
-      over35: Number(marketOverProbability(cardsMean, 3.5, 19).toFixed(1)),
-      under35: Number((100 - marketOverProbability(cardsMean, 3.5, 19)).toFixed(1)),
-      over45: Number(marketOverProbability(cardsMean, 4.5, 18).toFixed(1)),
-      under45: Number((100 - marketOverProbability(cardsMean, 4.5, 18)).toFixed(1)),
-    },
-    shots: {
-      over105: Number(over105Shots.toFixed(1)),
-      under105: Number((100 - over105Shots).toFixed(1)),
-      over125: Number(clamp(over105Shots - 6).toFixed(1)),
-      under125: Number((100 - clamp(over105Shots - 6)).toFixed(1)),
-      over145: Number(clamp(over105Shots - 12).toFixed(1)),
-      under145: Number((100 - clamp(over105Shots - 12)).toFixed(1)),
-      over165: Number(clamp(over105Shots - 18).toFixed(1)),
-      under165: Number((100 - clamp(over105Shots - 18)).toFixed(1)),
-    },
   };
 }
 
