@@ -95,13 +95,6 @@ export default function MatchAnalysisPage() {
       { market: 'Over 8.5 Corner', value: result.corners?.over85 ?? NaN },
       { market: 'Over 9.5 Corner', value: result.corners?.over95 ?? NaN },
       { market: 'Over 10.5 Corner', value: result.corners?.over105 ?? NaN },
-      { market: 'Over 2.5 Cartellini', value: result.cards?.over25 ?? NaN },
-      { market: 'Over 3.5 Cartellini', value: result.cards?.over35 ?? NaN },
-      { market: 'Over 4.5 Cartellini', value: result.cards?.over45 ?? NaN },
-      { market: 'Over 10.5 Tiri', value: result.shots?.over105 ?? NaN },
-      { market: 'Over 12.5 Tiri', value: result.shots?.over125 ?? NaN },
-      { market: 'Over 14.5 Tiri', value: result.shots?.over145 ?? NaN },
-      { market: 'Over 16.5 Tiri', value: result.shots?.over165 ?? NaN },
     ]
       .filter((x) => Number.isFinite(x.value))
       .sort((a, b) => b.value - a.value)
@@ -229,32 +222,6 @@ export default function MatchAnalysisPage() {
                 ) : (
                   <p style={{ marginTop: 14, opacity: 0.78 }}>Corner O/U non calcolato: mancano corner concessi per almeno una squadra.</p>
                 )}
-
-                {result.cards ? (
-                  <>
-                    <h3 style={{ marginBottom: 8, marginTop: 14 }}>Cartellini Over/Under</h3>
-                    <MarketRow label="Over 2.5" value={result.cards.over25} />
-                    <MarketRow label="Under 2.5" value={result.cards.under25} />
-                    <MarketRow label="Over 3.5" value={result.cards.over35} />
-                    <MarketRow label="Under 3.5" value={result.cards.under35} />
-                    <MarketRow label="Over 4.5" value={result.cards.over45} />
-                    <MarketRow label="Under 4.5" value={result.cards.under45} />
-                  </>
-                ) : null}
-
-                {result.shots ? (
-                  <>
-                    <h3 style={{ marginBottom: 8, marginTop: 14 }}>Tiri Over/Under</h3>
-                    <MarketRow label="Over 10.5" value={result.shots.over105} />
-                    <MarketRow label="Under 10.5" value={result.shots.under105} />
-                    <MarketRow label="Over 12.5" value={result.shots.over125} />
-                    <MarketRow label="Under 12.5" value={result.shots.under125} />
-                    <MarketRow label="Over 14.5" value={result.shots.over145} />
-                    <MarketRow label="Under 14.5" value={result.shots.under145} />
-                    <MarketRow label="Over 16.5" value={result.shots.over165} />
-                    <MarketRow label="Under 16.5" value={result.shots.under165} />
-                  </>
-                ) : null}
 
                 {suggestions.length ? (
                   <>
